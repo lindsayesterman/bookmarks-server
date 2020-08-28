@@ -53,6 +53,17 @@ app.use(function validateBearerToken(req, res, next) {
     next()
 })
 
+app.use(function errorHandler(error, req, res, next) {
+    let response
+    if (NODE_ENV === 'production') {
+        response = { error: { message: 'server error' } }
+    } else {
+        console.error(error)
+        response = { message: error.message, error }
+    }
+    res.status(500).json(response)
+})
+
 app.get('/', (req, res) => {
     res.send('Hello, world!')
 })
@@ -92,7 +103,7 @@ app.post('/bookmark', (req,res) => {
         .status(400)
         .send('Invalid data');
     }
-
+    
     const id = uuid();
     
     const bookmark = {
@@ -112,15 +123,24 @@ app.post('/bookmark', (req,res) => {
     .json(bookmark);
 })
 
-app.use(function errorHandler(error, req, res, next) {
-    let response
-    if (NODE_ENV === 'production') {
-        response = { error: { message: 'server error' } }
-    } else {
-        console.error(error)
-        response = { message: error.message, error }
+app.delete('/bookmark/:id', (req, res) => {
+    const { id } = req.params;
+    
+    const bookmarkIndex = bookmarks.findIndex(b => b.id == id);
+    
+    if (bookmarkIndex === -1) {
+        logger.error(`Bookmark with id ${id} not found.`);
+        return res
+        .status(404)
+        .send('Not Found');
     }
-    res.status(500).json(response)
-})
+    
+    bookmarks.splice(bookmarkIndex, 1);
+    
+    logger.info(`Bookmark with id ${id} deleted.`);
+    res
+    .send(`Bookmark with id ${id} deleted.`)
+    .end();
+});
 
 module.exports = app

@@ -6,11 +6,12 @@ const logger = require('../logger')
 const bookmarks = require('../store')
 
 bookmarksRouter
-.route('/bookmark')
+.route('/bookmarks')
 .get((req, res) => {
     res
     .json(bookmarks)
 })
+
 .post(bodyParser, (req, res) => {
     const { title, url, description, rating } = req.body;
     
